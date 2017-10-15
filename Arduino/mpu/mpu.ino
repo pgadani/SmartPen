@@ -183,22 +183,22 @@ void setup() {
     // crystal solution for the UART timer.
 
     // initialize device
-    Serial.println(F("Initializing I2C devices..."));
+//    Serial.println(F("Initializing I2C devices..."));
     mpu.initialize();
     pinMode(INTERRUPT_PIN, INPUT);
 
     // verify connection
-    Serial.println(F("Testing device connections..."));
-    Serial.println(mpu.testConnection() ? F("MPU6050 connection successful") : F("MPU6050 connection failed"));
+//    Serial.println(F("Testing device connections..."));
+//    Serial.println(mpu.testConnection() ? F("MPU6050 connection successful") : F("MPU6050 connection failed"));
 
     // wait for ready
-    Serial.println(F("\nSend any character to begin DMP programming and demo: "));
-    while (Serial.available() && Serial.read()); // empty buffer
-    while (!Serial.available());                 // wait for data
-    while (Serial.available() && Serial.read()); // empty buffer again
+//    Serial.println(F("\nSend any character to begin DMP programming and demo: "));
+//    while (Serial.available() && Serial.read()); // empty buffer
+//    while (!Serial.available());                 // wait for data
+//    while (Serial.available() && Serial.read()); // empty buffer again
 
     // load and configure the DMP
-    Serial.println(F("Initializing DMP..."));
+//    Serial.println(F("Initializing DMP..."));
     devStatus = mpu.dmpInitialize();
 
     // supply your own gyro offsets here, scaled for min sensitivity
@@ -210,16 +210,16 @@ void setup() {
     // make sure it worked (returns 0 if so)
     if (devStatus == 0) {
         // turn on the DMP, now that it's ready
-        Serial.println(F("Enabling DMP..."));
+//        Serial.println(F("Enabling DMP..."));
         mpu.setDMPEnabled(true);
 
         // enable Arduino interrupt detection
-        Serial.println(F("Enabling interrupt detection (Arduino external interrupt 0)..."));
+        // Serial.println(F("Enabling interrupt detection (Arduino external interrupt 0)..."));
         attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN), dmpDataReady, RISING);
         mpuIntStatus = mpu.getIntStatus();
 
         // set our DMP Ready flag so the main loop() function knows it's okay to use it
-        Serial.println(F("DMP ready! Waiting for first interrupt..."));
+//        Serial.println(F("DMP ready! Waiting for first interrupt..."));
         dmpReady = true;
 
         // get expected DMP packet size for later comparison
@@ -229,9 +229,9 @@ void setup() {
         // 1 = initial memory load failed
         // 2 = DMP configuration updates failed
         // (if it's going to break, usually the code will be 1)
-        Serial.print(F("DMP Initialization failed (code "));
-        Serial.print(devStatus);
-        Serial.println(F(")"));
+//        Serial.print(F("DMP Initialization failed (code "));
+//        Serial.print(devStatus);
+//        Serial.println(F(")"));
     }
 
     // configure LED for output
@@ -273,7 +273,7 @@ void loop() {
     if ((mpuIntStatus & 0x10) || fifoCount == 1024) {
         // reset so we can continue cleanly
         mpu.resetFIFO();
-        Serial.println(F("FIFO overflow!"));
+//        Serial.println(F("FIFO overflow!"));
 
     // otherwise, check for DMP data ready interrupt (this should happen frequently)
     } else if (mpuIntStatus & 0x02) {
@@ -288,18 +288,30 @@ void loop() {
         fifoCount -= packetSize;
 
         #ifdef OUTPUT_QUATERNION_REALACCEL
-            mpu.dmpGetQuaternion(&q, fifoBuffer);
-            Serial.print(q.w);
-            Serial.print(q.x);
-            Serial.print(q.y);
-            Serial.print(q.z);
-            // output real acceleration, not? adjusted to remove gravity
-            mpu.dmpGetAccel(&aa, fifoBuffer);
-            // mpu.dmpGetGravity(&gravity, &q);
-            // mpu.dmpGetLinearAccel(&aaReal, &aa, &gravity);
-            Serial.print(aa.x);
-            Serial.print(aa.y);
-            Serial.println(aa.z);
+            // 4 bytes each (quaternions need to be divided by 16384):
+            // 0-3: q.w
+            // 4-7: q.x
+            // 8-11: q.y
+            // 12-15: q.z
+            // 28-31: aa.x
+            // 32-35: aa.y
+            // 36-39: aa.z
+
+            Serial.print("world\r\n");      
+//            Serial.write(&fifoBuffer[0], 16); // quaternion
+//            Serial.write(&fifoBuffer[28], 12); // acceleration
+            // mpu.dmpGetQuaternion(&q, fifoBuffer);
+            // Serial.write(q.w);
+            // Serial.print(q.x);
+            // Serial.print(q.y);
+            // Serial.print(q.z);
+            // // output real acceleration, not? adjusted to remove gravity
+            // mpu.dmpGetAccel(&aa, fifoBuffer);
+            // // mpu.dmpGetGravity(&gravity, &q);
+            // // mpu.dmpGetLinearAccel(&aaReal, &aa, &gravity);
+            // Serial.print(aa.x);
+            // Serial.print(aa.y);
+            // Serial.println(aa.z);
         #endif
 
         #ifdef OUTPUT_READABLE_QUATERNION
@@ -389,3 +401,4 @@ void loop() {
         digitalWrite(LED_PIN, blinkState);
     }
 }
+
