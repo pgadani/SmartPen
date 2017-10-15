@@ -5,7 +5,8 @@ port = '/dev/ttyACM0'
 baud = 112500
 
 if __name__ == '__main__':
-	s = serial.Serial(port=port, baudrate=baud, timeout=1)
+
+	s = serial.Serial(port=port, baudrate=baud)
 	while(True):
 		print('readable?')
 		if s.readable():
