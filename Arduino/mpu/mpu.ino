@@ -80,11 +80,13 @@ MPU6050 mpu;
  * ========================================================================= */
 
 
+// Dumps binary data for quaternion angles and acceleration (6 in total, 2 bytes each)
+#define OUTPUT_QUATERNION_REALACCEL
 
 // uncomment "OUTPUT_READABLE_QUATERNION" if you want to see the actual
 // quaternion components in a [w, x, y, z] format (not best for parsing
 // on a remote host such as Processing or something though)
-//#define OUTPUT_READABLE_QUATERNION
+// #define OUTPUT_READABLE_QUATERNION
 
 // uncomment "OUTPUT_READABLE_EULER" if you want to see Euler angles
 // (in degrees) calculated from the quaternions coming from the FIFO.
@@ -97,7 +99,7 @@ MPU6050 mpu;
 // from the FIFO. Note this also requires gravity vector calculations.
 // Also note that yaw/pitch/roll angles suffer from gimbal lock (for
 // more info, see: http://en.wikipedia.org/wiki/Gimbal_lock)
-#define OUTPUT_READABLE_YAWPITCHROLL
+// #define OUTPUT_READABLE_YAWPITCHROLL
 
 // uncomment "OUTPUT_READABLE_REALACCEL" if you want to see acceleration
 // components with gravity removed. This acceleration reference frame is
@@ -110,7 +112,7 @@ MPU6050 mpu;
 // components with gravity removed and adjusted for the world frame of
 // reference (yaw is relative to initial orientation, since no magnetometer
 // is present in this case). Could be quite handy in some cases.
-//#define OUTPUT_READABLE_WORLDACCEL
+// #define OUTPUT_READABLE_WORLDACCEL
 
 // uncomment "OUTPUT_TEAPOT" if you want output that matches the
 // format used for the InvenSense teapot demo
@@ -285,6 +287,21 @@ void loop() {
         // (this lets us immediately read more without waiting for an interrupt)
         fifoCount -= packetSize;
 
+        #ifdef OUTPUT_QUATERNION_REALACCEL
+            mpu.dmpGetQuaternion(&q, fifoBuffer);
+            Serial.print(q.w);
+            Serial.print(q.x);
+            Serial.print(q.y);
+            Serial.print(q.z);
+            // output real acceleration, not? adjusted to remove gravity
+            mpu.dmpGetAccel(&aa, fifoBuffer);
+            // mpu.dmpGetGravity(&gravity, &q);
+            // mpu.dmpGetLinearAccel(&aaReal, &aa, &gravity);
+            Serial.print(aa.x);
+            Serial.print(aa.y);
+            Serial.println(aa.z);
+        #endif
+
         #ifdef OUTPUT_READABLE_QUATERNION
             // display quaternion values in easy matrix form: w x y z
             mpu.dmpGetQuaternion(&q, fifoBuffer);
@@ -315,6 +332,7 @@ void loop() {
             mpu.dmpGetQuaternion(&q, fifoBuffer);
             mpu.dmpGetGravity(&gravity, &q);
             mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
+            Serial.print("ypr\t");
             Serial.print(ypr[0] * 180/M_PI);
             Serial.print("\t");
             Serial.print(ypr[1] * 180/M_PI);
